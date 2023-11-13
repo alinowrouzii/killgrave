@@ -162,21 +162,41 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) addImposterHandler(imposters []Imposter) {
 	for _, imposter := range imposters {
-		r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
+		if imposter.Request.Endpoint == "/" {
+			r := s.router.PathPrefix("/").HandlerFunc(ImposterHandler(imposter)).
 			Methods(imposter.Request.Method).
 			MatcherFunc(MatcherBySchema(imposter))
 
-		if imposter.Request.Headers != nil {
-			for k, v := range *imposter.Request.Headers {
-				r.HeadersRegexp(k, v)
+			if imposter.Request.Headers != nil {
+				for k, v := range *imposter.Request.Headers {
+					r.HeadersRegexp(k, v)
+				}
 			}
-		}
+	
+			if imposter.Request.Params != nil {
+				for k, v := range *imposter.Request.Params {
+					r.Queries(k, v)
+				}
+			}
+		} else {
+			r := s.router.HandleFunc(imposter.Request.Endpoint, ImposterHandler(imposter)).
+			Methods(imposter.Request.Method).
+			MatcherFunc(MatcherBySchema(imposter))
 
-		if imposter.Request.Params != nil {
-			for k, v := range *imposter.Request.Params {
-				r.Queries(k, v)
+			if imposter.Request.Headers != nil {
+				for k, v := range *imposter.Request.Headers {
+					r.HeadersRegexp(k, v)
+				}
 			}
-		}
+	
+			if imposter.Request.Params != nil {
+				for k, v := range *imposter.Request.Params {
+					r.Queries(k, v)
+				}
+			}
+	    }
+
+		
 	}
 }
 
